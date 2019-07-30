@@ -1,4 +1,8 @@
 {
+  "name": "arnaud-brun-cra-fork-exercise",
+  "version": "0.1.0",
+  "description": "Exercise to manipulate custom react scripts and avoid ejecting CRA",
+  "repository": "arnaud-brun/create-react-app",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -51,5 +55,8 @@
     "yarn.lock": [
       "git rm --cached"
     ]
+  },
+  "bugs": {
+    "url": "https://github.com/arnaud-brun/create-react-app/issues"
   }
 }

@@ -75,6 +75,13 @@ function tryGitInit(appPath) {
   }
 }
 
+// CUSTOM SCRIPT
+function customHelloLog() {
+  console.log(chalk.red('CUSTOM LOG BITCH'));
+  console.log('BITCH !');
+}
+// CUSTOM SCRIPT END
+
 module.exports = function(
   appPath,
   appName,
@@ -256,6 +263,9 @@ module.exports = function(
   }
   console.log();
   console.log('Happy hacking!');
+
+  console.log();
+  customHelloLog();
 };
 
 function isReactInstalled(appPackage) {
