@@ -32,7 +32,6 @@ const modules = require('./modules');
 const getClientEnvironment = require('./env');
 const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
 const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpackPlugin');
-const SentryWebpackPlugin = require('@sentry/webpack-plugin');
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
 const eslint = require('eslint');
 // @remove-on-eject-begin
@@ -41,7 +40,7 @@ const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 const postcssNormalize = require('postcss-normalize');
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
-let shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
+const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
 // Some apps do not need the benefits of saving a web request, so not inlining the chunk
 // makes for a smoother build process.
 const shouldInlineRuntimeChunk = process.env.INLINE_RUNTIME_CHUNK !== 'false';
@@ -58,36 +57,12 @@ const cssRegex = /\.css$/;
 const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
-const lessRegex = /\.less$/;
-const lessModuleRegex = /\.module\.less$/;
-
-// Version
-const releaseNumber = require('./package.json').version;
-
-// Output build path
-let outputPath = undefined;
 
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
 module.exports = function(webpackEnv) {
-  // Define additional env configurations
   const isEnvDevelopment = webpackEnv === 'development';
   const isEnvProduction = webpackEnv === 'production';
-  const isEnvTest = isEnvDevelopment && process.env.NODE_ENV_TEST === 'test';
-  const isEnvDemo = isEnvDevelopment && process.env.NODE_ENV_DEMO === 'demo';
-
-  // Handle output files, and other specific stuff
-  // Env Development must be checked after demo and test envs !
-  if (isEnvProduction) {
-    outputPath = paths.appBuildProd;
-    shouldUseSourceMap = true; // Always generate a sourcemap in production
-  } else if (isEnvDemo) {
-    outputPath = paths.appBuildDemo;
-  } else if (isEnvTest) {
-    outputPath = paths.appBuildTest;
-  } else if (isEnvDevelopment) {
-    outputPath = paths.appBuildDev;
-  }
 
   // Webpack uses `publicPath` to determine where the app is being served from.
   // It requires a trailing slash, or the file assets will get an incorrect path.
@@ -145,15 +120,6 @@ module.exports = function(webpackEnv) {
           sourceMap: isEnvProduction && shouldUseSourceMap,
         },
       },
-      {
-        // Less loader
-        loader: require.resolve('less-loader'),
-        options: {
-          sourceMap: true,
-          importLoaders: 1,
-          javascriptEnabled: true,
-        },
-      },
     ].filter(Boolean);
     if (preProcessor) {
       loaders.push({
@@ -198,7 +164,7 @@ module.exports = function(webpackEnv) {
     ].filter(Boolean),
     output: {
       // The build folder.
-      path: outputPath,
+      path: isEnvProduction ? paths.appBuild : undefined,
       // Add /* filename */ comments to generated require()s in the output.
       pathinfo: isEnvDevelopment,
       // There will be one main bundle, and one file per asynchronous chunk.
@@ -562,40 +528,6 @@ module.exports = function(webpackEnv) {
                 'sass-loader'
               ),
             },
-            // Opt-in support for LESS (using .less extensions).
-            // By default we support LESS Modules with the
-            // extensions .module.less
-            {
-              test: lessRegex,
-              exclude: lessModuleRegex,
-              use: getStyleLoaders(
-                {
-                  importLoaders: 2,
-                  sourceMap: isEnvProduction && shouldUseSourceMap,
-                },
-                'less-loader'
-              ),
-              // Don't consider CSS imports dead code even if the
-              // containing package claims to have no side effects.
-              // Remove this when webpack adds a warning or an error for this.
-              // See https://github.com/webpack/webpack/issues/6571
-              sideEffects: true,
-            },
-            // Adds support for CSS Modules, but using LESS
-            // using the extension .module.less
-            {
-              test: lessModuleRegex,
-              use: getStyleLoaders(
-                {
-                  importLoaders: 2,
-                  sourceMap: isEnvProduction && shouldUseSourceMap,
-                  modules: true,
-                  getLocalIdent: getCSSModuleLocalIdent,
-                },
-                'less-loader'
-              ),
-            },
-
             // "file" loader makes sure those assets get served by WebpackDevServer.
             // When you `import` an asset, you get its (virtual) filename.
             // In production, they would get copied to the `build` folder.
@@ -751,13 +683,6 @@ module.exports = function(webpackEnv) {
           silent: true,
           // The formatter is invoked directly in WebpackDevServerUtils during development
           formatter: isEnvProduction ? typescriptFormatter : undefined,
-        }),
-      isEnvProduction &&
-        new SentryWebpackPlugin({
-          release: 'release-' + releaseNumber,
-          include: './builds/prod',
-          ignoreFile: '.sentrycliignore',
-          ignore: ['node_modules', 'webpack.config.js'],
         }),
     ].filter(Boolean),
     // Some libraries import Node modules but don't use them in the browser.
